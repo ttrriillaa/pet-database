@@ -70,6 +70,39 @@ public class PetDatabase {
         System.out.printf("%d pets added.%n", added);
     }
 
+    private static void updatePet() {
+        viewPets();
+        System.out.print("\nEnter the pet ID to update: ");
+        try {
+            int id = Integer.parseInt(scanner.nextLine());
+            Pet pet = pets.get(id);
+            System.out.print("Enter new name and new age: ");
+            String[] parts = scanner.nextLine().split(" ");
+            if (parts.length == 2) {
+                String old = pet.getName() + " " + pet.getAge();
+                pet.setName(parts[0]);
+                pet.setAge(Integer.parseInt(parts[1]));
+                System.out.printf("%s changed to %s %d.%n", old, pet.getName(), pet.getAge());
+            } else {
+                System.out.println("Invalid input.");
+            }
+        } catch (Exception e) {
+            System.out.println("Invalid ID.");
+        }
+    }
+
+    private static void removePet() {
+        viewPets();
+        System.out.print("\nEnter the pet ID to remove: ");
+        try {
+            int id = Integer.parseInt(scanner.nextLine());
+            Pet pet = pets.remove(id);
+            System.out.printf("%s %d is removed.%n", pet.getName(), pet.getAge());
+        } catch (Exception e) {
+            System.out.println("Invalid ID.");
+        }
+    }
+
     private static void searchByName() {
         System.out.print("Enter a name to search: ");
         String name = scanner.nextLine().toLowerCase(Locale.ROOT);

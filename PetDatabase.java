@@ -70,6 +70,42 @@ public class PetDatabase {
         System.out.printf("%d pets added.%n", added);
     }
 
+    private static void searchByName() {
+        System.out.print("Enter a name to search: ");
+        String name = scanner.nextLine().toLowerCase(Locale.ROOT);
+        ArrayList<Pet> results = new ArrayList<>();
+        for (Pet pet : pets) {
+            if (pet.getName().toLowerCase(Locale.ROOT).equals(name)) {
+                results.add(pet);
+            }
+        }
+        printTableHeader();
+        for (Pet pet : results) {
+            System.out.println(pet);
+        }
+        printTableFooter(results.size());
+    }
+
+    private static void searchByAge() {
+        System.out.print("Enter age to search: ");
+        try {
+            int age = Integer.parseInt(scanner.nextLine());
+            ArrayList<Pet> results = new ArrayList<>();
+            for (Pet pet : pets) {
+                if (pet.getAge() == age) {
+                    results.add(pet);
+                }
+            }
+            printTableHeader();
+            for (Pet pet : results) {
+                System.out.println(pet);
+            }
+            printTableFooter(results.size());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid age.");
+        }
+    }
+
     private static void printTableHeader() {
         System.out.println("+----------------------+");
         System.out.println("| ID | NAME      | AGE |");

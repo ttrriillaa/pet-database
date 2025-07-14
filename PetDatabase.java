@@ -1,12 +1,14 @@
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
 
 public class PetDatabase {
+    static final int MAX_PETS = 5;
     static ArrayList<Pet> pets = new ArrayList<>();
     private static final Scanner scanner = new Scanner(System.in);
+    private static final String FILE_NAME = "pets.txt";
 
     public static void main(String[] args) {
+        loadPetsFromFile();
         boolean running = true;
         System.out.println("Pet Database Program.");
         while (running) {
@@ -14,11 +16,9 @@ public class PetDatabase {
             switch (scanner.nextLine().trim()) {
                 case "1" -> viewPets();
                 case "2" -> addPets();
-                case "3" -> updatePet();
-                case "4" -> removePet();
-                case "5" -> searchByName();
-                case "6" -> searchByAge();
-                case "7" -> {
+                case "3" -> removePet();
+                case "4" -> {
+                    savePetsToFile();
                     System.out.println("Goodbye!");
                     running = false;
                 }
@@ -30,12 +30,9 @@ public class PetDatabase {
     private static void printMenu() {
         System.out.println("\nWhat would you like to do?");
         System.out.println("1) View all pets");
-        System.out.println("2) Add more pets");
-        System.out.println("3) Update an existing pet");
-        System.out.println("4) Remove an existing pet");
-        System.out.println("5) Search pets by name");
-        System.out.println("6) Search pets by age");
-        System.out.println("7) Exit program");
+        System.out.println("2) Add new pets");
+        System.out.println("3) Remove a pet");
+        System.out.println("4) Exit program");
         System.out.print("Your choice: ");
     }
 
@@ -49,93 +46,72 @@ public class PetDatabase {
 
     private static void addPets() {
         int added = 0;
-        while (true) {
+        while (pets.size() < MAX_PETS) {
             System.out.print("add pet (name, age): ");
             String input = scanner.nextLine().trim();
             if (input.equalsIgnoreCase("done")) break;
             String[] parts = input.split(" ");
-            if (parts.length == 2) {
-                try {
-                    String name = parts[0];
-                    int age = Integer.parseInt(parts[1]);
+            if (parts.length != 2) {
+                System.out.printf("Error: %s is not a valid input.%n", input);
+                continue;
+            }
+            try {
+                String name = parts[0];
+                int age = Integer.parseInt(parts[1]);
+                if (age < 1 || age > 20) {
+                    System.out.printf("Error: %d is not a valid age.%n", age);
+                } else {
                     pets.add(new Pet(name, age));
                     added++;
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid age format.");
                 }
-            } else {
-                System.out.println("Invalid input.");
+            } catch (NumberFormatException e) {
+                System.out.printf("Error: %s is not a valid input.%n", input);
             }
+        }
+        if (pets.size() == MAX_PETS) {
+            System.out.println("Error: Database is full.");
         }
         System.out.printf("%d pets added.%n", added);
     }
 
-    private static void updatePet() {
-        viewPets();
-        System.out.print("\nEnter the pet ID to update: ");
-        try {
-            int id = Integer.parseInt(scanner.nextLine());
-            Pet pet = pets.get(id);
-            System.out.print("Enter new name and new age: ");
-            String[] parts = scanner.nextLine().split(" ");
-            if (parts.length == 2) {
-                String old = pet.getName() + " " + pet.getAge();
-                pet.setName(parts[0]);
-                pet.setAge(Integer.parseInt(parts[1]));
-                System.out.printf("%s changed to %s %d.%n", old, pet.getName(), pet.getAge());
-            } else {
-                System.out.println("Invalid input.");
-            }
-        } catch (Exception e) {
-            System.out.println("Invalid ID.");
-        }
-    }
-
     private static void removePet() {
         viewPets();
-        System.out.print("\nEnter the pet ID to remove: ");
+        System.out.print("Enter the pet ID to remove: ");
         try {
             int id = Integer.parseInt(scanner.nextLine());
+            if (id < 0 || id >= pets.size()) {
+                System.out.printf("Error: ID %d does not exist.%n", id);
+                return;
+            }
             Pet pet = pets.remove(id);
             System.out.printf("%s %d is removed.%n", pet.getName(), pet.getAge());
-        } catch (Exception e) {
-            System.out.println("Invalid ID.");
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Invalid ID.");
         }
     }
 
-    private static void searchByName() {
-        System.out.print("Enter a name to search: ");
-        String name = scanner.nextLine().toLowerCase(Locale.ROOT);
-        ArrayList<Pet> results = new ArrayList<>();
-        for (Pet pet : pets) {
-            if (pet.getName().toLowerCase(Locale.ROOT).equals(name)) {
-                results.add(pet);
-            }
-        }
-        printTableHeader();
-        for (Pet pet : results) {
-            System.out.println(pet);
-        }
-        printTableFooter(results.size());
-    }
-
-    private static void searchByAge() {
-        System.out.print("Enter age to search: ");
-        try {
-            int age = Integer.parseInt(scanner.nextLine());
-            ArrayList<Pet> results = new ArrayList<>();
-            for (Pet pet : pets) {
-                if (pet.getAge() == age) {
-                    results.add(pet);
+    private static void loadPetsFromFile() {
+        try (Scanner fileScanner = new Scanner(new File(FILE_NAME))) {
+            while (fileScanner.hasNextLine()) {
+                String[] line = fileScanner.nextLine().split(",");
+                if (line.length == 2) {
+                    String name = line[0].trim();
+                    int age = Integer.parseInt(line[1].trim());
+                    pets.add(new Pet(name, age));
                 }
             }
-            printTableHeader();
-            for (Pet pet : results) {
-                System.out.println(pet);
+        } catch (FileNotFoundException e) {
+            // File doesn't exist yet – that's fine
+        }
+    }
+
+    private static void savePetsToFile() {
+        try (PrintWriter writer = new PrintWriter(FILE_NAME)) {
+            for (Pet pet : pets) {
+                writer.println(pet.getName() + "," + pet.getAge());
             }
-            printTableFooter(results.size());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid age.");
+        } catch (IOException e) {
+            System.out.println("Error saving file.");
         }
     }
 
